@@ -8,6 +8,13 @@ never needs you to change anything. Upgrade with
 
 ## [Unreleased]
 
+### Fixed
+
+- A first message (a tapped starter question, the composer, `HelpPuff.send()`)
+  now switches to the thread at once, with the visitor's words and the
+  typing dots, instead of leaving the home screen unchanged until the whole
+  first answer has arrived.
+
 ## [0.10.0] - 2026-10-17
 
 ### Added
