@@ -8,6 +8,12 @@ never needs you to change anything. Upgrade with
 
 ## [Unreleased]
 
+### Fixed
+
+- An options line whose `options:` prefix the model forgot (`[[A | B | C]]`)
+  is read as options, or stripped when it does not look like them, instead
+  of reaching the visitor as text with its brackets.
+
 ## [0.10.0] - 2026-10-17
 
 ### Added

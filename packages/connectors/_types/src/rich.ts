@@ -250,6 +250,17 @@ export function toolCallToMessage(name: string, rawArguments: unknown): Message 
 const MARKER = /\[\[\s*(options|link)\s*:\s*([^\]]*)\]\]/gi;
 
 /**
+ * The options marker with its kind forgotten: `[[A | B | C]]`. Models drop
+ * the `options:` prefix now and then, and left alone the line reached the
+ * visitor as text, brackets and all. Read as options when it looks like
+ * them (two to four short items, none a URL); stripped silently otherwise,
+ * as the comment above promises. `MARKER` has already consumed the
+ * prefixed forms, and the first item may not contain a colon, so a
+ * `link:` or `options:` body can never be read twice.
+ */
+const BARE = /\[\[\s*([^\]:|]*\|[^\]]*)\]\]/g;
+
+/**
  * How earlier replies are written into the history (`summarizeReply`). Models
  * imitate them: an echoed `[Offered choices: …]` is read as the options it
  * meant to give, and the others are dropped.
@@ -299,7 +310,14 @@ export function parseMarkers(input: string): { text: string; messages: Message[]
       if (url && parts[0]) links.push({ label: parts[0], url });
     }
     return '';
-  });
+  })
+    .replace(BARE, (_match, body: string) => {
+      const parts = body.split('|').map((part) => part.trim()).filter(Boolean);
+      if (parts.length >= 2 && parts.length <= 4 && parts.every((part) => part.length <= 100 && !/^https?:\/\//i.test(part))) {
+        options = options.concat(parts);
+      }
+      return '';
+    });
 
   let text = stripped;
   if (!options.length) {

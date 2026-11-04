@@ -525,4 +525,15 @@ describe('replies stay safe and clean', () => {
     expect(parseMarkers('Would you like a call? A: Yes please B: Not now').messages[0]).toMatchObject({ options: [{ label: 'Yes please' }, { label: 'Not now' }] });
     expect(parseMarkers('Plan A: we lay it. Plan B: you do.').messages).toEqual([]);
   });
+
+  it('reads an options line whose kind the model forgot', () => {
+    expect(parseMarkers('Our coir is buffered.\n[[Read the full guide | Ask about our buffered coir | Request a callback]]')).toMatchObject({
+      text: 'Our coir is buffered.',
+      messages: [{ type: 'options', options: [{ label: 'Read the full guide' }, { label: 'Ask about our buffered coir' }, { label: 'Request a callback' }] }],
+    });
+    // A URL in the list is not an option; the line is stripped rather than shown.
+    expect(parseMarkers('More here. [[Guide | https://example.com/guide]]')).toMatchObject({ text: 'More here.', messages: [] });
+    // The prefixed form is read once, by MARKER, never again by the bare rule.
+    expect(parseMarkers('Pick one. [[options: Yes | No]]').messages[0]).toMatchObject({ options: [{ label: 'Yes' }, { label: 'No' }] });
+  });
 });
