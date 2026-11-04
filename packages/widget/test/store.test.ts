@@ -124,6 +124,31 @@ describe('start — routing through the lead form', () => {
     expect(state.status).toBe('idle');
   });
 
+  it('a first message shows at once, starts, and is not repeated when the session arrives', () => {
+    const userMessage: Message = { id: 'u1', ts: 1, role: 'user', type: 'text', text: 'How much water does the brick need?' };
+    const started = reducer(withConfig({ leadForm: { enabled: false } }), { type: 'start', firstMessage: userMessage.text, userMessage });
+    expect(started.screen).toBe('chat');
+    expect(started.status).toBe('starting');
+    expect(isBusy(started)).toBe(true);
+    expect(started.messages.map((m) => m.id)).toEqual(['u1']);
+    const live = reducer(started, {
+      type: 'session/started',
+      session: { token: 't', id: 's', expiresAt: 9e15 },
+      messages: [agentMessage('a')],
+      userMessage,
+    });
+    expect(live.messages.map((m) => m.id)).toEqual(['u1', 'a']);
+    expect(live.status).toBe('idle');
+  });
+
+  it('a first message through the form shows at once too', () => {
+    const userMessage: Message = { id: 'u2', ts: 1, role: 'user', type: 'text', text: 'Do you ship to Oregon?' };
+    const state = reducer(withConfig(), { type: 'lead/submit', lead: { name: 'Ada', phone: '04' }, firstMessage: userMessage.text, userMessage });
+    expect(state.screen).toBe('chat');
+    expect(state.status).toBe('starting');
+    expect(state.messages.map((m) => m.id)).toEqual(['u2']);
+  });
+
   it('submitting the form stores the lead and begins starting', () => {
     const state = reducer(withConfig(), { type: 'lead/submit', lead: { name: 'Ada', phone: '04' } });
     expect(state.lead).toEqual({ name: 'Ada', phone: '04' });

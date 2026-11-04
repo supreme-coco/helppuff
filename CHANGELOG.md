@@ -10,6 +10,10 @@ never needs you to change anything. Upgrade with
 
 ### Fixed
 
+- A first message (a tapped starter question, the composer, `HelpPuff.send()`)
+  now switches to the thread at once, with the visitor's words and the
+  typing dots, instead of leaving the home screen unchanged until the whole
+  first answer has arrived.
 - An options line whose `options:` prefix the model forgot (`[[A | B | C]]`)
   is read as options, or stripped when it does not look like them, instead
   of reaching the visitor as text with its brackets.

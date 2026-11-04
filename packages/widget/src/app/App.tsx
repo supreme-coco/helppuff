@@ -401,8 +401,11 @@ export function App({
     [runtime],
   );
 
+  /** The visitor's first message as a thread message, made once so `start` and `session/started` share its id. */
+  const firstUserMessage = (text: string): Message => ({ id: clientId(), ts: Date.now(), role: 'user', type: 'text', text });
+
   const startSession = useCallback(
-    async (lead: Record<string, string>, firstMessage?: string) => {
+    async (lead: Record<string, string>, firstMessage?: string, userMessage?: Message) => {
       /*
        * Every path into a session comes through here, so this is the one
        * place a captcha token has to be obtained. It is fetched fresh each
@@ -451,18 +454,9 @@ export function App({
         type: 'session/started',
         session: result.session,
         messages: result.messages,
-        // Show what the visitor asked, not just the answer to it.
-        ...(firstMessage
-          ? {
-              userMessage: {
-                id: clientId(),
-                ts: Date.now(),
-                role: 'user' as const,
-                type: 'text' as const,
-                text: firstMessage,
-              },
-            }
-          : {}),
+        // Show what the visitor asked, not just the answer to it. The same
+        // message `start` or `lead/submit` already showed, when it did.
+        ...(firstMessage ? { userMessage: userMessage ?? firstUserMessage(firstMessage) } : {}),
       });
       runtime.emit('lead', lead);
     },
@@ -522,8 +516,9 @@ export function App({
       // conversation (shown in the thread, answered first), and stays on the lead.
       const fromField = lead['message']?.trim() || undefined;
       const message = config.leadForm.askFirstMessage ? (firstMessage ?? fromField) : (queued ?? fromField);
-      dispatch({ type: 'lead/submit', lead, ...(message ? { firstMessage: message } : {}) });
-      void startSession(lead, message);
+      const userMessage = message ? firstUserMessage(message) : undefined;
+      dispatch({ type: 'lead/submit', lead, ...(message ? { firstMessage: message, userMessage } : {}) });
+      void startSession(lead, message, userMessage);
     },
     [config, startSession],
   );
@@ -664,7 +659,13 @@ export function App({
         return;
       }
       if (leadReady(config, leadRef.current ?? {})) {
-        void startSession(leadRef.current ?? {}, trimmed);
+        // Switch to the thread now, with the question and the typing dots,
+        // rather than when the whole first answer has arrived: a tapped
+        // starter question used to sit on the home screen, unacknowledged,
+        // for as long as the model took.
+        const userMessage = firstUserMessage(trimmed);
+        dispatch({ type: 'start', firstMessage: trimmed, userMessage });
+        void startSession(leadRef.current ?? {}, trimmed, userMessage);
         return;
       }
       queuedFirstMessage.current = trimmed;

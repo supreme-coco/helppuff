@@ -96,8 +96,15 @@ export type Action =
   | { type: 'identify'; lead: Record<string, string> }
   | { type: 'teaser/dismiss' }
   | { type: 'sound/toggle' }
-  | { type: 'start'; firstMessage?: string }
-  | { type: 'lead/submit'; lead: Record<string, string>; firstMessage?: string }
+  /**
+   * Begin a conversation. With a `firstMessage`, `userMessage` is the
+   * visitor's own words as a message, shown in the thread at once so the
+   * screen can switch and show the typing dots while the session starts;
+   * `session/started` then carries the same message (same id) and does
+   * not repeat it.
+   */
+  | { type: 'start'; firstMessage?: string; userMessage?: Message }
+  | { type: 'lead/submit'; lead: Record<string, string>; firstMessage?: string; userMessage?: Message }
   | {
       type: 'session/started';
       session: Session;
@@ -230,6 +237,10 @@ export function reducer(state: State, action: Action): State {
         ...(screen === 'chat' && state.messages.length === 0 && !action.firstMessage
           ? { messages: greetingMessages(state.config, state.lead) }
           : {}),
+        // The visitor's first message, shown before the session exists, so a
+        // tapped starter question is acknowledged at once rather than after
+        // the whole first answer has arrived.
+        ...(screen === 'chat' && action.userMessage ? { messages: capMessages([...state.messages, action.userMessage]) } : {}),
         // Only the direct path opens a session here; the form path waits for submit.
         status: screen === 'chat' ? 'starting' : 'idle',
         error: null,
@@ -244,9 +255,12 @@ export function reducer(state: State, action: Action): State {
         status: 'starting',
         error: null,
         ...(state.messages.length === 0 && !action.firstMessage ? { messages: greetingMessages(state.config, action.lead) } : {}),
+        ...(action.userMessage ? { messages: capMessages([...state.messages, action.userMessage]) } : {}),
       };
 
-    case 'session/started':
+    case 'session/started': {
+      // Already in the thread when `start` or `lead/submit` showed it first.
+      const shown = action.userMessage ? state.messages.some((m) => m.id === action.userMessage?.id) : false;
       return {
         ...state,
         session: action.session,
@@ -255,13 +269,14 @@ export function reducer(state: State, action: Action): State {
         messages: capMessages([
           // The backend greeted on its own (Retell, say): its words, not ours.
           ...(action.userMessage || action.messages.length === 0 ? state.messages : state.messages.filter((m) => !isGreeting(m))),
-          ...(action.userMessage ? [action.userMessage] : []),
+          ...(action.userMessage && !shown ? [action.userMessage] : []),
           ...action.messages,
         ]),
         preview: '',
         error: null,
         unread: state.open ? 0 : state.unread + action.messages.length,
       };
+    }
 
     case 'session/failed':
       // Stay on the screen the visitor is on; the error renders inline.
