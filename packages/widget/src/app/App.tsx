@@ -140,6 +140,14 @@ export function App({
   /** A message typed before the lead form, replayed once it is submitted. */
   const queuedFirstMessage = useRef<string | null>(null);
   /**
+   * The first message while its session is still being opened, with the
+   * thread message that shows it. A message sent with `startSession` never
+   * reaches the pending queue, so nothing else holds it: without this, a
+   * retry after a failed start opened an empty conversation and the
+   * visitor's question was gone.
+   */
+  const firstMessageRef = useRef<{ text: string; userMessage: Message } | null>(null);
+  /**
    * A synchronous mirror of the lead. `identify()` and `send()` can arrive in
    * the same tick — the loader replays its whole queue at once — and a
    * dispatch is not visible to the next command until the next render.
@@ -458,6 +466,7 @@ export function App({
         // message `start` or `lead/submit` already showed, when it did.
         ...(firstMessage ? { userMessage: userMessage ?? firstUserMessage(firstMessage) } : {}),
       });
+      firstMessageRef.current = null;
       runtime.emit('lead', lead);
     },
     [api, runtime, onText],
@@ -517,6 +526,7 @@ export function App({
       const fromField = lead['message']?.trim() || undefined;
       const message = config.leadForm.askFirstMessage ? (firstMessage ?? fromField) : (queued ?? fromField);
       const userMessage = message ? firstUserMessage(message) : undefined;
+      firstMessageRef.current = message && userMessage ? { text: message, userMessage } : null;
       dispatch({ type: 'lead/submit', lead, ...(message ? { firstMessage: message, userMessage } : {}) });
       void startSession(lead, message, userMessage);
     },
@@ -664,6 +674,7 @@ export function App({
         // starter question used to sit on the home screen, unacknowledged,
         // for as long as the model took.
         const userMessage = firstUserMessage(trimmed);
+        firstMessageRef.current = { text: trimmed, userMessage };
         dispatch({ type: 'start', firstMessage: trimmed, userMessage });
         void startSession(leadRef.current ?? {}, trimmed, userMessage);
         return;
@@ -860,8 +871,13 @@ export function App({
   const onRetry = useCallback(() => {
     const current = stateRef.current;
     dispatch({ type: 'error/dismiss' });
-    if (!current.session) void startSession(leadRef.current ?? {});
-    else if (current.draft.trim()) void doSend({ kind: 'text', text: current.draft.trim() });
+    if (!current.session) {
+      // The start failed, so the first message never reached a session: ask
+      // it again, with the typing dots, rather than open an empty conversation.
+      const first = firstMessageRef.current;
+      if (first) dispatch({ type: 'start', firstMessage: first.text, userMessage: first.userMessage });
+      void startSession(leadRef.current ?? {}, first?.text, first?.userMessage);
+    } else if (current.draft.trim()) void doSend({ kind: 'text', text: current.draft.trim() });
   }, [doSend, startSession]);
 
   const onNewChat = useCallback(() => {
@@ -870,6 +886,7 @@ export function App({
     if (ending) api.end(ending.token);
     leadRef.current = null;
     queuedFirstMessage.current = null;
+    firstMessageRef.current = null;
     clearStorage(siteId);
     dispatch({ type: 'reset' });
   }, [siteId, api]);

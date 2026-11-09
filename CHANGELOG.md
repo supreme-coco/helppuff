@@ -14,6 +14,9 @@ never needs you to change anything. Upgrade with
   now switches to the thread at once, with the visitor's words and the
   typing dots, instead of leaving the home screen unchanged until the whole
   first answer has arrived.
+- **Try again** after a failed start asks the first message again, with the
+  typing dots, instead of opening an empty conversation with the visitor's
+  question gone.
 
 ## [0.10.0] - 2026-10-17
 

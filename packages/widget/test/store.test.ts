@@ -141,6 +141,18 @@ describe('start — routing through the lead form', () => {
     expect(live.status).toBe('idle');
   });
 
+  it('starting again with the same first message does not repeat it', () => {
+    const userMessage: Message = { id: 'u3', ts: 1, role: 'user', type: 'text', text: 'Is the brick OMRI Listed?' };
+    const base = withConfig({ leadForm: { enabled: false } });
+    const first = reducer(base, { type: 'start', firstMessage: userMessage.text, userMessage });
+    const failed = reducer(first, { type: 'session/failed', error: { code: 'unknown', message: 'That took too long.', retryable: true } });
+    expect(failed.status).toBe('idle');
+    expect(failed.messages.map((m) => m.id)).toEqual(['u3']);
+    const again = reducer(failed, { type: 'start', firstMessage: userMessage.text, userMessage });
+    expect(again.messages.map((m) => m.id)).toEqual(['u3']);
+    expect(again.status).toBe('starting');
+  });
+
   it('a first message through the form shows at once too', () => {
     const userMessage: Message = { id: 'u2', ts: 1, role: 'user', type: 'text', text: 'Do you ship to Oregon?' };
     const state = reducer(withConfig(), { type: 'lead/submit', lead: { name: 'Ada', phone: '04' }, firstMessage: userMessage.text, userMessage });

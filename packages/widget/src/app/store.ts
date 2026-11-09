@@ -240,7 +240,10 @@ export function reducer(state: State, action: Action): State {
         // The visitor's first message, shown before the session exists, so a
         // tapped starter question is acknowledged at once rather than after
         // the whole first answer has arrived.
-        ...(screen === 'chat' && action.userMessage ? { messages: capMessages([...state.messages, action.userMessage]) } : {}),
+        // A retry after a failed start dispatches this again with the same message: shown once.
+        ...(screen === 'chat' && action.userMessage && !state.messages.some((m) => m.id === action.userMessage?.id)
+          ? { messages: capMessages([...state.messages, action.userMessage]) }
+          : {}),
         // Only the direct path opens a session here; the form path waits for submit.
         status: screen === 'chat' ? 'starting' : 'idle',
         error: null,

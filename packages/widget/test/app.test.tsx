@@ -514,6 +514,37 @@ describe('recoverable failures degrade in place', () => {
     await seeMessage('Second time lucky');
   });
 
+  it('retries a first message whose session never opened', async () => {
+    const api = fakeApi();
+    api.startSession.mockRejectedValueOnce(
+      new ApiError({ code: 'unknown', message: 'That took too long. Please try again.', retryable: true }),
+    );
+    api.startSession.mockResolvedValueOnce({
+      session: { token: 'tok-2', id: 'sid-2', expiresAt: Date.now() + 3600_000 },
+      messages: [agentText('Second time lucky')],
+    });
+
+    const { handle } = setup({ config: { leadForm: { enabled: false } }, api });
+    await openPanel(handle);
+    await act(async () => {
+      commands(handle).send('How much water does the brick need?');
+    });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+    // The question stays in the thread while the error is shown.
+    expect(inThread().getAllByText('How much water does the brick need?')).toHaveLength(1);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /try again/i }));
+    });
+    await seeMessage('Second time lucky');
+
+    // Regression: the retry opened an empty conversation and the question was lost.
+    expect(api.startSession).toHaveBeenCalledTimes(2);
+    expect(api.startSession.mock.calls[1]?.[0]).toMatchObject({ firstMessage: 'How much water does the brick need?' });
+    expect(inThread().getAllByText('How much water does the brick need?')).toHaveLength(1);
+  });
+
   it('reports a failed session start without leaving the form', async () => {
     const api = fakeApi();
     api.startSession.mockRejectedValue(
