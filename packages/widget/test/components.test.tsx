@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/preact';
+import { act, fireEvent, render, screen } from '@testing-library/preact';
 import type { Message, WidgetConfig } from '@helppuff/protocol';
 import { Composer } from '../src/components/Composer.js';
 import { ErrorNotice } from '../src/components/ErrorNotice.js';
@@ -159,6 +159,33 @@ describe('Thread', () => {
     // Regression: an empty row still costs a fade-in, a gap and a timestamp,
     // which a visitor sees as something flashing and vanishing.
     expect(container.querySelector('.hp-row')).toBeNull();
+  });
+
+  it('shows the wait in plain sight, and owns up to a long one', async () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<Thread messages={[]} busy pendingIds={new Set()} handlers={inertHandlers} t={t} />);
+      const label = container.querySelector('.hp-thinking-label');
+      expect(label?.textContent).toBe('Typing…');
+      // Regression: the label was screen-reader-only, so a sighted visitor saw three small dots and nothing else.
+      expect(label?.classList.contains('hp-sr')).toBe(false);
+      expect(container.querySelector('.hp-thinking .hp-typing')).toBeTruthy();
+
+      await act(async () => {
+        vi.advanceTimersByTime(8000);
+      });
+      expect(container.querySelector('.hp-thinking-label')?.textContent).toBe('Still working on it…');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('gives way to the reply as soon as it streams', () => {
+    const { container } = render(
+      <Thread messages={[]} busy preview="Add water a little at a time" pendingIds={new Set()} handlers={inertHandlers} t={t} />,
+    );
+    expect(container.querySelector('.hp-thinking')).toBeNull();
+    expect(container.querySelector('[data-streaming]')?.textContent).toContain('Add water');
   });
 
   it('keeps grouping correct across a message it cannot draw', () => {

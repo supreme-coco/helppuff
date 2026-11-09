@@ -8,6 +8,13 @@ never needs you to change anything. Upgrade with
 
 ## [Unreleased]
 
+### Changed
+
+- The wait before a reply is in plain sight: the typing dots are larger and
+  in the accent colour, with the label beside them (it was for screen
+  readers only), and after eight seconds it reads "Still working on it…"
+  (`strings.stillThinking`). With reduced motion the dots hold still.
+
 ## [0.10.0] - 2026-10-17
 
 ### Added
