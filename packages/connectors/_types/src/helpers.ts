@@ -5,6 +5,16 @@ import { promptValue } from './untrusted.js';
 /** Outbound calls from a connector time out at 25s. */
 export const CONNECTOR_TIMEOUT_MS = 25_000;
 
+/**
+ * How long a model's stream may stay silent. A model that thinks before it
+ * answers writes nothing until its first word, so the whole of its thinking
+ * is one gap, and on a slow day that gap outran 25s and turned a good answer
+ * into "that took too long". Every other outbound call keeps
+ * `CONNECTOR_TIMEOUT_MS`. The widget waits a little longer than this, so a
+ * real stall is still reported here, by the side that knows why.
+ */
+export const MODEL_IDLE_TIMEOUT_MS = 50_000;
+
 let counter = 0;
 
 /** Message ids only need to be unique within a session. */

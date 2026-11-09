@@ -5,9 +5,19 @@ import { parseConfig, parseMessages } from './validate.js';
 import type { SendInput, Session, WidgetError } from './store.js';
 import type { WidgetConfig } from '@helppuff/protocol';
 
-/** Fail-safe: config gets 6s, a message send gets 30s. Nothing is unbounded. */
+/**
+ * Fail-safe: config gets 6s, a message send gets 60s. Nothing is unbounded.
+ *
+ * The send limit is also the longest silence a stream may keep, and it is
+ * the one a visitor meets: the server forwards only the words of a reply,
+ * never a model's thinking, so a model that thinks for half a minute is
+ * silent here for all of it while the server is still happily reading. At
+ * 30s that was "That took too long" on answers that arrived two seconds
+ * later. It stays above the server's `MODEL_IDLE_TIMEOUT_MS` (50s), so a
+ * real stall is reported by the server first.
+ */
 export const CONFIG_TIMEOUT_MS = 6000;
-export const SEND_TIMEOUT_MS = 30_000;
+export const SEND_TIMEOUT_MS = 60_000;
 
 const TOKEN_HEADER = 'x-helppuff-token';
 

@@ -8,6 +8,14 @@ never needs you to change anything. Upgrade with
 
 ## [Unreleased]
 
+### Changed
+
+- A reply may take longer before the widget gives up: a model's stream may
+  stay silent for 50s (was 25s) and the widget waits 60s (was 30s). A model
+  that thinks before answering is silent for all of its thinking, and on a
+  slow day that outran the old limits on answers that did arrive. Other
+  outbound calls still time out at 25s.
+
 ## [0.10.0] - 2026-10-17
 
 ### Added
