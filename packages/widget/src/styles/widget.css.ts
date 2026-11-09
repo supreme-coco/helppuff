@@ -299,6 +299,12 @@ export const WIDGET_CSS = `
 .hp-typing i:nth-child(3) { animation-delay: .36s; }
 @keyframes hp-blink { 0%,60%,100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
 
+/* The wait before a reply: larger dots in the accent, beside a label a sighted visitor can read. */
+.hp-thinking { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.hp-thinking .hp-typing { padding: 0; gap: 5px; }
+.hp-thinking .hp-typing i { width: 8px; height: 8px; background: var(--hp-accent); }
+.hp-thinking-label { font-size: var(--hp-text-sm); color: var(--hp-text-2); }
+
 /* ------------------------------------------------------- rich messages */
 
 .hp-options { display: flex; flex-direction: column; gap: 10px; }
@@ -657,6 +663,8 @@ a.hp-chip { text-decoration: none; display: inline-flex; align-items: center; ga
   }
   .hp-header-orb, .hp-orb { animation: none; }
   .hp-typing i { animation: hp-blink 1.2s steps(2) infinite; }
+  /* Beside its label the dots can simply hold still: the words carry the wait. */
+  .hp-thinking .hp-typing i { animation: none; opacity: .7; }
   * { transition-duration: 1ms !important; }
   @keyframes hp-fade { from { opacity: 0; } to { opacity: 1; } }
 }

@@ -18,6 +18,34 @@ export function Typing() {
   );
 }
 
+/** How long the dots run before the label owns up to the wait. */
+export const STILL_THINKING_MS = 8000;
+
+/**
+ * The wait before a reply, in plain sight: the typing dots beside a label a
+ * sighted visitor can read. The label used to be for screen readers only,
+ * and three small dots alone are easy to miss when a model thinks for
+ * several seconds before its first word. After `STILL_THINKING_MS` the label
+ * says the assistant is still at it, so a long wait does not read as a stall.
+ * Mounted only while nothing has streamed yet, so the clock restarts with
+ * every reply.
+ */
+export function Thinking({ t }: { t: (key: StringKey) => string }) {
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), STILL_THINKING_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  return (
+    <div class="hp-thinking">
+      <Typing />
+      <span class="hp-thinking-label" aria-live="polite">
+        {slow ? t('stillThinking') : t('thinking')}
+      </span>
+    </div>
+  );
+}
+
 function relativeTime(ts: number, now: number): string {
   const seconds = Math.max(0, Math.round((now - ts) / 1000));
   if (seconds < 60) return 'now';
@@ -96,8 +124,7 @@ export function Thread({
           </div>
         ) : busy ? (
           <div class="hp-row">
-            <Typing />
-            <span class="hp-sr">{t('thinking')}</span>
+            <Thinking t={t} />
           </div>
         ) : null}
       </div>

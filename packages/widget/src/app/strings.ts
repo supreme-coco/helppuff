@@ -11,6 +11,8 @@ export const DEFAULT_STRINGS = {
   placeholder: 'Type a message…',
   status: 'Typically replies instantly',
   thinking: 'Typing…',
+  // What the thinking label changes to when a reply is taking a while.
+  stillThinking: 'Still working on it…',
   required: 'required',
   submit: 'Start chat',
   firstMessage: 'How can we help?',
