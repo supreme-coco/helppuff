@@ -19,7 +19,7 @@ export function Typing() {
 }
 
 /** How long the dots run before the label owns up to the wait. */
-export const STILL_THINKING_MS = 8000;
+const STILL_THINKING_MS = 8000;
 
 /**
  * The wait before a reply, in plain sight: the typing dots beside a label a
@@ -39,9 +39,7 @@ export function Thinking({ t }: { t: (key: StringKey) => string }) {
   return (
     <div class="hp-thinking">
       <Typing />
-      <span class="hp-thinking-label" aria-live="polite">
-        {slow ? t('stillThinking') : t('thinking')}
-      </span>
+      <span aria-live="polite">{slow ? t('stillThinking') : t('thinking')}</span>
     </div>
   );
 }
