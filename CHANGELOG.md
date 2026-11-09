@@ -8,12 +8,27 @@ never needs you to change anything. Upgrade with
 
 ## [Unreleased]
 
+### Changed
+
+- The wait before a reply is in plain sight: the typing dots are larger and
+  in the accent colour, with the label beside them (it was for screen
+  readers only), and after eight seconds it reads "Still working on it…"
+  (`strings.stillThinking`). With reduced motion the dots hold still.
+- A reply may take longer before the widget gives up: a model's stream may
+  stay silent for 50s (was 25s) and the widget waits 60s (was 30s). A model
+  that thinks before answering is silent for all of its thinking, and on a
+  slow day that outran the old limits on answers that did arrive. Other
+  outbound calls still time out at 25s.
+
 ### Fixed
 
 - A first message (a tapped starter question, the composer, `HelpPuff.send()`)
   now switches to the thread at once, with the visitor's words and the
   typing dots, instead of leaving the home screen unchanged until the whole
   first answer has arrived.
+- **Try again** after a failed start asks the first message again, with the
+  typing dots, instead of opening an empty conversation with the visitor's
+  question gone.
 - An options line whose `options:` prefix the model forgot (`[[A | B | C]]`)
   is read as options, or stripped when it does not look like them, instead
   of reaching the visitor as text with its brackets.
