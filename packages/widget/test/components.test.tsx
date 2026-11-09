@@ -165,7 +165,7 @@ describe('Thread', () => {
     vi.useFakeTimers();
     try {
       const { container } = render(<Thread messages={[]} busy pendingIds={new Set()} handlers={inertHandlers} t={t} />);
-      const label = container.querySelector('.hp-thinking-label');
+      const label = container.querySelector('.hp-thinking span');
       expect(label?.textContent).toBe('Typing…');
       // Regression: the label was screen-reader-only, so a sighted visitor saw three small dots and nothing else.
       expect(label?.classList.contains('hp-sr')).toBe(false);
@@ -174,7 +174,7 @@ describe('Thread', () => {
       await act(async () => {
         vi.advanceTimersByTime(8000);
       });
-      expect(container.querySelector('.hp-thinking-label')?.textContent).toBe('Still working on it…');
+      expect(container.querySelector('.hp-thinking span')?.textContent).toBe('Still working on it…');
     } finally {
       vi.useRealTimers();
     }
