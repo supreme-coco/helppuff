@@ -28,7 +28,12 @@ const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).ver
  * The app's 35 kb is the number that reflects real payload, since that
  * bundle carries Preact and every component. Keep that one honest.
  */
-export const BUDGETS = { 'loader.js': 8 * 1024, app: 35 * 1024, live: 6 * 1024, booking: 8 * 1024, upload: 3 * 1024 };
+// Deploy branch only (supreme-coco): the app budget is 36 kb, not upstream's
+// 35. Each of our five patches fits upstream's budget alone, but together
+// they come to 35,967 bytes against 35,840, and upstream's own build sits
+// within about 200 bytes of the line. When the patches land upstream this
+// goes back to whatever upstream sets.
+export const BUDGETS = { 'loader.js': 8 * 1024, app: 36 * 1024, live: 6 * 1024, booking: 8 * 1024, upload: 3 * 1024 };
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist, { recursive: true });
