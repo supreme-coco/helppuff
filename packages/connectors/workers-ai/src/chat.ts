@@ -1,5 +1,5 @@
 import { readSse } from '@helppuff/protocol';
-import { CONNECTOR_TIMEOUT_MS } from '@helppuff/connector-types';
+import { MODEL_IDLE_TIMEOUT_MS } from '@helppuff/connector-types';
 import { reasoningInputs, thinkingRoom, type AiLike, type Reasoning } from '@helppuff/rag';
 
 /**
@@ -204,7 +204,7 @@ export async function readStream(body: ReadableStream<Uint8Array>, onText: (delt
       // Legacy models send their calls whole, in one frame.
       if (Array.isArray(frame['tool_calls'])) whole = callsOf(frame['tool_calls']);
     },
-    CONNECTOR_TIMEOUT_MS,
+    MODEL_IDLE_TIMEOUT_MS,
   );
 
   // A held-back `<tool` that never became a tag is ordinary text.

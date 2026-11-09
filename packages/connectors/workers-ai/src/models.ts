@@ -1,6 +1,6 @@
 import { readSse } from '@helppuff/protocol';
 import {
-  CONNECTOR_TIMEOUT_MS,
+  MODEL_IDLE_TIMEOUT_MS,
   ConnectorError,
   extensions,
   fetchWithTimeout,
@@ -207,7 +207,7 @@ async function readAnthropicStream(body: ReadableStream<Uint8Array>, onText: (de
           break;
       }
     },
-    CONNECTOR_TIMEOUT_MS,
+    MODEL_IDLE_TIMEOUT_MS,
   );
   const toolCalls = [...calls.entries()].sort(([a], [b]) => a - b).map(([, c]) => ({ id: c.id, name: c.name, arguments: c.json || '{}' }));
   return { content, toolCalls, usage: input !== null && output !== null ? { input, output } : null };
